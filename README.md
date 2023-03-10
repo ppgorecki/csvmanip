@@ -2,9 +2,11 @@
 Simple file merging and csv creator
 
 Input are multiple files with the following structure:
+```
 LABEL=VALUE
 LABEL=VALUE
 ...
+```
 or they are csv's with headers.
 
 CSV header is created from LABEL's.
@@ -14,11 +16,20 @@ Extracted digits are placed in Id column.
 Filename is inserted into SourceFile column.
 If a label occures several times, all occurences are relabeled to columns LABEL1, LABEL2 etc.
 
-Typical usage:
-csvmanip.py list of FILES and DIRS  - merge all files into a single csv file
+Typical usage to merge all files and files from given dirs into a single csv file:
+```
+csvmanip.py FILE1 FILE2 DIR1 DIR2 DIR3
+```
 
--s - rows are sorted based on input file order
--i COL1,COL2,... - ignore LABELS (may include SourceFile, Id)
--e VALUE - use VALUE for empty cells; default is the empty string
--r - do not relabel multiple occurences of labels; preserve the last only
--m - do not relabel multiple occurences of labels; instead merge into semicolon separated list 
+Options
+* -s - separator in output and -D/-d; the default is comma
+* -d "LABEL=VALUE,LABEL=VALUE,..." - set default values for given labels
+* -D FILE - default values from a file
+* -f - rows are sorted based on input file order
+* -i LABEL1,LABEL2,... - ignore LABELS (may include SourceFile, Id)
+* -r [lm1aA_] - do not relabel multiple occurences of labels:
+  *  l - preserve the last occurence of LABEL=VALUE from an input file
+  *  m - merge all values into semicolon separated list 
+  *  a - preserve all and add suffix to the column label using letters [a-z], instead of 1, 2, 3,... (default)
+  *  A - as above but use [A-Z]
+  *  _ - use underscore before relabelling suffix
