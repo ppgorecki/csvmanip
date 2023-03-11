@@ -18,6 +18,7 @@ Options:
  -D FILE - default values from a file
  -F - rows are sorted based on input file order
  -i LABELLIST - ignore LABELS (may include SourceFile, Id)
+ -c - print warning if values are inequal when processing labels by -f/-l
  
  -r [lm1aA] - do not relabel multiple occurences of labels:
      l - preserve the last occurence of LABEL=VALUE from an input file
@@ -58,10 +59,11 @@ def getdigits(s):
     return ''
 
 class DataCollector:
-    def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str,  relabellingrules, classnamedelimiter: str, mergedelimiter: str):
+    def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str,  relabellingrules, classnamedelimiter: str, mergedelimiter: str, checkmerging: bool):
         self.filecnt = 0        
         self.relabellingrules = relabellingrules
         self.separator = separator
+        self.checkmerging = checkmerging
         self.labseparator = labseparator
         self.classnamedelimiter = classnamedelimiter
         self.mergedelimiter = mergedelimiter
@@ -134,10 +136,14 @@ class DataCollector:
                 #print("HER",lab,curclassname,checkrelabel('first',lab,curclassname),self.relabellingrules)
                 # relabel rule
                 if checkrelabel('last', lab, curclassname): 
+                    if checkmerging and clab in res and res[clab]!=val:
+                        print(f"Warning: lost value of {clab}={res[clab]} in the last rule",file=sys.stderr)
                     res[clab] = val
                     continue
 
                 if checkrelabel('first', lab, curclassname): 
+                    if checkmerging and clab in res and res[clab]!=val:
+                        print(f"Warning: lost value of {clab}={val} in the first rule",file=sys.stderr)
 
                     if clab not in res: res[clab] = val
                     continue
@@ -261,10 +267,11 @@ def main():
     defaults = []
     digitordering = 1
     ignorelabels = []
+    checkmerging = False
     global verbose
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:R:D:Ff:i:v:1:a:A:r:l:m:n:C:M:")
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:R:D:Ff:i:v:1:a:A:r:l:m:n:C:M:c")
     except getopt.GetoptError as err:
         print(str(err))
         usage()
@@ -322,12 +329,14 @@ def main():
             labseparator = a          
         elif o == "-C":
             classnamedelimiter = a          
+        elif o == "-c":
+            checkmerging = True          
         elif o == "-M":
             mergedelimiter = a
         else:
             assert False, "unhandled option %s %s " % (o, a)
 
-    dc = DataCollector(defaults, ignorelabels, separator, labseparator, rl, classnamedelimiter,mergedelimiter)
+    dc = DataCollector(defaults, ignorelabels, separator, labseparator, rl, classnamedelimiter,mergedelimiter, checkmerging)
 
     dc.readfiles(args)
 
