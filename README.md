@@ -34,6 +34,7 @@ General options:
 * -f - rows are sorted based on input file order
 * -i LABEL1,LABEL2,... - ignore LABELS (may include SourceFile, Id)
 * -v LEVEL - verbose (0 lowest, default; 1 print basic info)
+* -C CLASSDELIMITER - classname delimiter; the default is colon
 
 Global relabelling options in case of conflicting names of columns:
 * -r [lm1aA_] - in case of multiple occurences of labels in the input file:

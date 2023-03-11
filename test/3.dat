@@ -1,0 +1,12 @@
+a=True
+Edge=10
+Edge=11
+Edge=12
+Tree="(a,b)"
+Tree="(c,d)"
+
+A1:
+
+Tree="(e,f)"
+Tree=(a,(b,c))
+Err=False

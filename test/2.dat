@@ -1,0 +1,12 @@
+Edge=10
+Edge=16
+
+A1:
+Err=False
+
+A2:
+Edge=100
+Edge=103
+Edge=105
+:
+Edge=12
