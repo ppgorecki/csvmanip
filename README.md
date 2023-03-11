@@ -22,7 +22,7 @@ CSV header is created from LABEL's.
 Rows are sorted using digits extracted from file names (e.g., result.12.txt result.1555.txt -> extracted 12, 1555).
 Extracted digits are placed in Id column.
 Filename is inserted into SourceFile column.
-If a label occures several times, all occurences are relabeled to columns LABEL1, LABEL2 etc. (see -r1)
+If a label occures several times, all occurences are relabeled to columns LABEL1, LABEL2 etc. (see relabelling rules)
 
 Typical usage to merge all files and files from given dirs into a single csv file:
 ```
@@ -31,36 +31,33 @@ csvmanip.py FILE1 FILE2 DIR1 DIR2 DIR3
 
 ## Command line options 
 
-General options:
+### General options
 * -d "LABEL=VALUE,LABEL=VALUE,..." - set default values for given labels; forces sorting of columns
 * -D FILE - default values from a file (see the input format); forces sorting of columns
-* -s SEPARATOR - separator in the output file; the default is comma
-* -f - rows are sorted based on input file order
-* -i LABEL1,LABEL2,... - ignore LABELS (may include SourceFile, Id)
-* -v LEVEL - verbose (0 lowest, default; 1 print basic info)
+* -F - rows are sorted based on input file order
+* -i LABELLIST - ignore LABELS (may include SourceFile, Id)
 
-Global relabelling options in case of conflicting names of columns:
-* -r [lm1aA_] - in case of multiple occurences of labels in the input file:
-  *  1 - preserve all add suffix to the column label using numbers (default);
-  *  l - preserve the last occurence of LABEL=VALUE from an input file
-  *  m - merge all values into semicolon separated list 
-  *  A - as above but use [A-Z]
-  *  a - as above but use [a-z]  
-* -R SUFFIXDELIMITER - suffix delimiter in relabelling; default is the empty string
+Here, LABELLIST is a comma-separated list of LABELS or ALL (meanining all labels). Class names can be also present. 
   
-Relabelling options for a given set of labels:
-* -l LABEL1,LABEL2,... - as -rl but for given labels
-* -m LABEL1,LABEL2,... - as -rm
-* -1 LABEL1,LABEL2,... - as -r1
-* -a LABEL1,LABEL2,... - as -ra
-* -A LABEL1,LABEL2,... - as -rA
-* -n LABEL1,LABEL2,... - labels without a class prefix (global)
+### Relabelling rules
+Relabelling rules to be applied when multiple occurences of LABEL assignments in a single file. Below, if LABEL in a LABELLIST is a class name, the rule applies to all labels assigned to the class. 
 
-Delimiters:
+* -f LABELLIST - for each class preserve the first occurence of LABEL=VALUE from each input
+* -l LABELLIST - as above but for the last occurence
+* -m LABELLIST - for each class merge all values into semicolon (see -M) separated list
+* -1 LABELLIST - preserve all occurences by creating new labels: LABEL, LABEL1, LABEL2, etc. (default)
+* -a LABELLIST - as above but use letters a-z as suffixes
+* -A LABELLIST - as above but use letters A-Z as suffixes
+* -n LABELLIST - ignore classes for the given labels (labels moved to global class)
+
+### Delimiters and separators:
+* -s SEPARATOR - separator in output and -d; the default is comma
+* -M MERGEDELIMITER - delimiter in merging values (def. is semicolon)
 * -C CLASSDELIMITER - classname delimiter; the default is colon
-* -R SUFFIXDELIMITER - suffix delimiter in relabelling (in -raA1); default is the empty string
-* -M MERGEDELIMITER - deliminter in merging values (def. is semicolon)
+* -R SUFFIXDELIMITER - suffix delimiter in relabelling; default is the empty string
 
+### Verbose level
+* -v LEVEL - verbose (0 lowest, default; 1 print basic info)
 
 ## Examples
 
@@ -120,10 +117,10 @@ Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
 3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",
 ```
 
-### Ignore Err and merge Edge labels
+### Ignore Err and merge Edge labels in classes
 
 ```
-$ csvmanip.py  -i Err -m Edge test (disjoint in classes)
+$ csvmanip.py  -i Err -m Edge test 
 Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
 1,test/1.dat,,10;14,"(a,b,c)",,,,
 2,test/2.dat,,10;16;12,,,,,100;103;105
@@ -157,3 +154,11 @@ Id;SourceFile;a;Edge;A2:Edge
 3;test/3.dat;True;10,11,12;
 ```
 
+### Ignore classes A1 and A2, take first values
+```
+$ csvmanip.py  -i A1,A2 -f ALL test
+Id,SourceFile,a,Edge,Tree
+1,test/1.dat,,10,"(a,b,c)"
+2,test/2.dat,,10,
+3,test/3.dat,True,10,"(a,b)"
+```
