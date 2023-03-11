@@ -1,6 +1,8 @@
 # csvmanip
+
 Simple file merging and csv creator
 
+## Input 
 Input are multiple files with lines having the following structure:
 ```
 LABEL=VALUE
@@ -27,6 +29,8 @@ Typical usage to merge all files and files from given dirs into a single csv fil
 csvmanip.py FILE1 FILE2 DIR1 DIR2 DIR3
 ```
 
+## Command line options 
+
 General options:
 * -d "LABEL=VALUE,LABEL=VALUE,..." - set default values for given labels; forces sorting of columns
 * -D FILE - default values from a file (see the input format); forces sorting of columns
@@ -34,7 +38,6 @@ General options:
 * -f - rows are sorted based on input file order
 * -i LABEL1,LABEL2,... - ignore LABELS (may include SourceFile, Id)
 * -v LEVEL - verbose (0 lowest, default; 1 print basic info)
-* -C CLASSDELIMITER - classname delimiter; the default is colon
 
 Global relabelling options in case of conflicting names of columns:
 * -r [lm1aA_] - in case of multiple occurences of labels in the input file:
@@ -53,5 +56,104 @@ Relabelling options for a given set of labels:
 * -A LABEL1,LABEL2,... - as -rA
 * -n LABEL1,LABEL2,... - labels without a class prefix (global)
 
+Delimiters:
+* -C CLASSDELIMITER - classname delimiter; the default is colon
+* -R SUFFIXDELIMITER - suffix delimiter in relabelling (in -raA1); default is the empty string
+* -M MERGEDELIMITER - deliminter in merging values (def. is semicolon)
 
+
+## Examples
+
+```
+$ cat test/1.dat 
+Edge=10
+Edge=14
+Tree=(a,b,c)
+
+$ cat test/2.dat 
+Edge=10
+Edge=16
+
+A1:
+Err=False
+
+A2:
+Edge=100
+Edge=103
+Edge=105
+:
+Edge=12
+
+
+$ cat test/3.dat 
+a=True
+Edge=10
+Edge=11
+Edge=12
+Tree="(a,b)"
+Tree="(c,d)"
+
+A1:
+
+Tree="(e,f)"
+Tree=(a,(b,c))
+Err=False
+```
+
+### Basic usage:
+
+```
+$ csvmanip.py test
+Id,SourceFile,a,Edge,Edge1,Edge2,Tree,Tree1,A1:Tree,A1:Tree1,A1:Err,A2:Edge,A2:Edge1,A2:Edge2
+1,test/1.dat,,10,14,,"(a,b,c)",,,,,,,
+2,test/2.dat,,10,16,12,,,,,False,100,103,105
+3,test/3.dat,True,10,11,12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",False,,,
+```
+
+### Ignore Err and merge Edge labels
+
+```
+$ csvmanip.py  -i Err -m Edge test
+Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
+1,test/1.dat,,10;14,"(a,b,c)",,,,
+2,test/2.dat,,10;16;12,,,,,100;103;105
+3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",
+```
+
+### Ignore Err and merge Edge labels
+
+```
+$ csvmanip.py  -i Err -m Edge test (disjoint in classes)
+Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
+1,test/1.dat,,10;14,"(a,b,c)",,,,
+2,test/2.dat,,10;16;12,,,,,100;103;105
+3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",
+```
+
+### Ignore Err and merge all occurences of Edge labels (including classes)
+```
+$ csvmanip.py  -i Err -m Edge -n Edge test
+Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1
+1,test/1.dat,,10;14,"(a,b,c)",,,
+2,test/2.dat,,10;16;100;103;105;12,,,,
+3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))"
+```
+
+### Ignore Err and preserve the last occurence of Edge (including classes)
+```
+$ csvmanip.py  -i Err -l Edge -n Edge test
+Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1
+1,test/1.dat,,14,"(a,b,c)",,,
+2,test/2.dat,,12,,,,
+3,test/3.dat,True,12,"(a,b)","(c,d)","(e,f)","(a,(b,c))"
+```
+
+### Ignore Err and Tree, set default for a, merge Edge, new column separator is ;, merging separator is ,
+```
+$ csvmanip.py  -i Err,Tree -d "a=False" -m Edge -s';' -M',' test
+Id;SourceFile;a;Edge;A2:Edge
+1;test/1.dat;False;10,14;
+2;test/2.dat;False;10,16,12;100,103,105
+3;test/3.dat;True;10,11,12;
+```
 
