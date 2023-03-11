@@ -1,6 +1,8 @@
 # csvmanip
+
 Simple file merging and csv creator
 
+## Input 
 Input are multiple files with lines having the following structure:
 ```
 LABEL=VALUE
@@ -26,6 +28,8 @@ Typical usage to merge all files and files from given dirs into a single csv fil
 ```
 csvmanip.py FILE1 FILE2 DIR1 DIR2 DIR3
 ```
+
+## Command line options 
 
 General options:
 * -d "LABEL=VALUE,LABEL=VALUE,..." - set default values for given labels; forces sorting of columns
@@ -58,7 +62,7 @@ Delimiters:
 * -M MERGEDELIMITER - deliminter in merging values (def. is semicolon)
 
 
-# Examples
+## Examples
 
 ```
 $ cat test/1.dat 
@@ -96,7 +100,7 @@ Tree=(a,(b,c))
 Err=False
 ```
 
-# Basic usage:
+### Basic usage:
 
 ```
 $ csvmanip.py test
@@ -106,7 +110,8 @@ Id,SourceFile,a,Edge,Edge1,Edge2,Tree,Tree1,A1:Tree,A1:Tree1,A1:Err,A2:Edge,A2:E
 3,test/3.dat,True,10,11,12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",False,,,
 ```
 
-# Ignore Err and merge Edge labels
+### Ignore Err and merge Edge labels
+
 ```
 $ csvmanip.py  -i Err -m Edge test
 Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
@@ -115,7 +120,8 @@ Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
 3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",
 ```
 
-# Ignore Err and merge Edge labels
+### Ignore Err and merge Edge labels
+
 ```
 $ csvmanip.py  -i Err -m Edge test (disjoint in classes)
 Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
@@ -124,7 +130,7 @@ Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1,A2:Edge
 3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))",
 ```
 
-# Ignore Err and merge all occurences of Edge labels (including classes)
+### Ignore Err and merge all occurences of Edge labels (including classes)
 ```
 $ csvmanip.py  -i Err -m Edge -n Edge test
 Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1
@@ -133,7 +139,7 @@ Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1
 3,test/3.dat,True,10;11;12,"(a,b)","(c,d)","(e,f)","(a,(b,c))"
 ```
 
-# Ignore Err and preserve the last occurence of Edge (including classes)
+### Ignore Err and preserve the last occurence of Edge (including classes)
 ```
 $ csvmanip.py  -i Err -l Edge -n Edge test
 Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1
@@ -142,7 +148,7 @@ Id,SourceFile,a,Edge,Tree,Tree1,A1:Tree,A1:Tree1
 3,test/3.dat,True,12,"(a,b)","(c,d)","(e,f)","(a,(b,c))"
 ```
 
-# Ignore Err and Tree, set default for a, merge Edge, new column separator is ;, merging separator is ,
+### Ignore Err and Tree, set default for a, merge Edge, new column separator is ;, merging separator is ,
 ```
 $ csvmanip.py  -i Err,Tree -d "a=False" -m Edge -s';' -M',' test
 Id;SourceFile;a;Edge;A2:Edge
