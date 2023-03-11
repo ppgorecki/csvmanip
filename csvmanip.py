@@ -137,13 +137,13 @@ class DataCollector:
                 # relabel rule
                 if checkrelabel('last', lab, curclassname): 
                     if self.checkmerging and clab in res and res[clab]!=val:
-                        print(f"Warning: lost value of {clab}={res[clab]} in the last rule (stored {val})",file=sys.stderr)
+                        print(f"Warning: in {srclab} lost value of {clab}={res[clab]} in the last rule (stored {val})",file=sys.stderr)
                     res[clab] = val
                     continue
 
                 if checkrelabel('first', lab, curclassname): 
                     if self.checkmerging and clab in res and res[clab]!=val:
-                        print(f"Warning: lost value of {clab}={val} in the first rule (stored {res[clab]})",file=sys.stderr)
+                        print(f"Warning: in {srclab} lost value of {clab}={val} in the first rule (stored {res[clab]})",file=sys.stderr)
 
                     if clab not in res: res[clab] = val
                     continue

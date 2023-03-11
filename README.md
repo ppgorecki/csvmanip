@@ -36,6 +36,7 @@ csvmanip.py FILE1 FILE2 DIR1 DIR2 DIR3
 * -D FILE - default values from a file (see the input format); forces sorting of columns
 * -F - rows are sorted based on input file order
 * -i LABELLIST - ignore LABELS (may include SourceFile, Id)
+* -c - print warning if values are inequal when processing labels by -f/-l
 
 Here, LABELLIST is a comma-separated list of LABELS or ALL (meanining all labels). Class names can be also present. 
   
@@ -161,4 +162,15 @@ Id,SourceFile,a,Edge,Tree
 1,test/1.dat,,10,"(a,b,c)"
 2,test/2.dat,,10,
 3,test/3.dat,True,10,"(a,b)"
+```
+
+### Take first values, but check if some values are lost
+```
+$ csvmanip.py  -i A1 -f A2 -c test 
+Warning: in test/2.dat lost value of A2:Edge=103 in the first rule (stored 100)
+Warning: in test/2.dat lost value of A2:Edge=105 in the first rule (stored 100)
+Id,SourceFile,a,Edge,Edge1,Edge2,Tree,Tree1,A2:Edge
+1,test/1.dat,,10,14,,"(a,b,c)",,
+2,test/2.dat,,10,16,12,,,100
+3,test/3.dat,True,10,11,12,"(a,b)","(c,d)",
 ```
