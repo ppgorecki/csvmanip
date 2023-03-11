@@ -18,6 +18,8 @@ csvmanip.py FILES... DIRS...
  -f - rows are sorted based on input file order
  -i LABEL1,LABEL2,... - ignore LABELS (may include SourceFile, Id)
  -C CLASSDELIMITER - classname delimiter; the default is colon
+ -R SUFFIXDELIMITER - suffix delimiter in relabelling (in -raA1); default is the empty string
+ -M MERGEDELIMITER - delimiter in merging values (def. is semicolon)
 
  -r [lm1aA] - do not relabel multiple occurences of labels:
      l - preserve the last occurence of LABEL=VALUE from an input file
@@ -25,7 +27,6 @@ csvmanip.py FILES... DIRS...
      1 - preserve all add suffix to the column label using numbers (default)
      a - preserve all and add suffix to the column label using letters [a-z]
      A - as above but use [A-Z]
- -R SUFFIXDELIMITER - suffix delimiter in relabelling (in -raA1); default is the empty string
 
  -l LABEL1,LABEL2,... - as -rl but for given labels
  -m LABEL1,LABEL2,... - as -rm
@@ -48,13 +49,14 @@ def getdigits(s):
     return ''
 
 class DataCollector:
-    def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str, relabelling: str, relabellingrules, classnamedelimiter: str):
+    def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str, relabelling: str, relabellingrules, classnamedelimiter: str, mergedelimiter: str):
         self.filecnt = 0
         self.relabelling = relabelling
         self.relabellingrules = relabellingrules
         self.separator = separator
         self.labseparator = labseparator
         self.classnamedelimiter = classnamedelimiter
+        self.mergedelimiter = mergedelimiter
         self.ignorelabels = ignorelabels 
         self.labels = [ [''] ]
         self.classname2labels = { '':self.labels[0] }        
@@ -99,7 +101,7 @@ class DataCollector:
                 continue            
 
             clab = lab
-            print(lab,val,srclab)
+            #print(lab,val,srclab)
             if lab in self.relabellingrules.get('noclass'):                
                 destlabels = self.classname2labels['']
             else:
@@ -118,8 +120,9 @@ class DataCollector:
                     res[clab] = val
                     continue
                 elif lab in self.relabellingrules['merge'] or 'm' in self.relabelling:
-                    res[clab] += ";" + val
+                    res[clab] += self.mergedelimiter + val
                     continue
+
                 digit = '1' in self.relabelling or lab in self.relabellingrules['digit']
                 AZr = 'A' in self.relabelling or lab in self.relabellingrules['AZ']
                 azr = 'a' in self.relabelling or lab in self.relabellingrules['az']
@@ -206,8 +209,7 @@ class DataCollector:
         if digitordering:
             s = sorted(self.rows,key=lambda r: int(r[idlabel]))
         else: s = self.rows
-        for r in s:
-            #print(r)
+        for r in s:            
             for i,l in enumerate(labs):                
                 sep=self.separator if i else ''                                
                 if l in r: 
@@ -232,11 +234,9 @@ def main():
     ignorelabels = []
     global verbose
 
-    SEPARATOR=','
-    SUFFIXSEPARATOR=''
-
+    
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:D:fi:r:v:1:a:A:r:l:m:n:C:")
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:R:D:fi:r:v:1:a:A:r:l:m:n:C:M:")
     except getopt.GetoptError as err:
         print(str(err))
         usage()
@@ -250,13 +250,14 @@ def main():
     labseparator = ''
     relabelling = '1'
     classnamedelimiter = ':'
+    mergedelimiter = ';'
 
     rl = dict(az=[],AZ=[],merge=[],noclass=[],digit=[],last=[])
     
     for o, a in opts:
 
         if o == "-s":
-            SEPARATOR = a
+            separator = a
         elif o == "-d":
             defaults = a.split(",")      
         elif o == "-D":
@@ -289,10 +290,12 @@ def main():
             labseparator = a          
         elif o == "-C":
             classnamedelimiter = a          
+        elif o == "-M":
+            mergedelimiter = a
         else:
             assert False, "unhandled option %s %s " % (o, a)
 
-    dc = DataCollector(defaults, ignorelabels, separator, labseparator, relabelling, rl, classnamedelimiter)
+    dc = DataCollector(defaults, ignorelabels, separator, labseparator, relabelling, rl, classnamedelimiter,mergedelimiter)
 
     dc.readfiles(args)
 
