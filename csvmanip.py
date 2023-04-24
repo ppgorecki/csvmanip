@@ -18,6 +18,7 @@ Options:
  -D FILE - default values from a file
  -F - rows are sorted based on input file order
  -i LABELLIST - ignore LABELS (may include SourceFile, Id)
+ -e LABELLIST - extract given LABELS only
  -c - print warning if values are inequal when processing labels by -f/-l
  
  -r [lm1aA] - do not relabel multiple occurences of labels:
@@ -46,6 +47,8 @@ Delimiters and separators:
  -R SUFFIXDELIMITER - suffix delimiter in relabelling; default is the empty string
 
  -v LEVEL - verbose (0 lowest, defailt; 1 print basic info)
+ -q - do not add quotations in strings
+ -H - skip header
 """)
 
 verbose = 0
@@ -59,7 +62,7 @@ def getdigits(s):
     return ''
 
 class DataCollector:
-    def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str,  relabellingrules, classnamedelimiter: str, mergedelimiter: str, checkmerging: bool):
+    def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str,  relabellingrules, classnamedelimiter: str, mergedelimiter: str, checkmerging: bool, extractlabels: [str]):
         self.filecnt = 0        
         self.relabellingrules = relabellingrules
         self.separator = separator
@@ -68,6 +71,7 @@ class DataCollector:
         self.classnamedelimiter = classnamedelimiter
         self.mergedelimiter = mergedelimiter
         self.ignorelabels = ignorelabels 
+        self.extractlabels = extractlabels
         self.labels = [ [''] ]
         self.classname2labels = { '':self.labels[0] }        
         self.rows = []
@@ -111,6 +115,9 @@ class DataCollector:
             
             if lab in self.ignorelabels or 'ALL' in self.ignorelabels:
                 continue            
+
+            if self.extractlabels and lab not in self.extractlabels:
+                continue
 
             clab = lab
             curclassname = classname
@@ -229,14 +236,15 @@ class DataCollector:
                 print(f"{p} should be a dir or a file.",sys.stderr)
                 exit(-1)
 
-    def csv(self, digitordering):
+    def csv(self, digitordering, skipheader, skipquotations):
         #print ("defaults:",self.defaults)
         #print ("labels:",self.labels)
         
         # gen header        
         labs = sum((l[1:] for l in self.labels),[])
         # print(labs)
-        print(self.separator.join(labs))
+        if not skipheader:
+            print(self.separator.join(labs))
 
         if digitordering:
             try:
@@ -253,10 +261,13 @@ class DataCollector:
                     val=self.defaults[l]
                 else:
                     val=''
+                if skipquotations and len(val)>1 and val[0]=='"' and val[-1]=='"':
+                    val=val[1:-1]
                 
-                if self.separator in val: # " forced 
-                    if not (val[0]==val[-1] and val[0] in "\"'"):
-                        val = '"' + val +'"'
+                if not skipquotations:
+                    if self.separator in val: # " forced 
+                        if not (val[0]==val[-1] and val[0] in "\"'"):
+                            val = '"' + val +'"'
                 print(sep+val,end='')
             print()
 
@@ -271,7 +282,7 @@ def main():
     global verbose
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:R:D:Ff:i:v:1:a:A:r:l:m:n:C:M:c")
+        opts, args = getopt.getopt(sys.argv[1:], "e:s:d:R:D:Ff:i:v:1:a:A:r:l:m:n:C:M:cqH")
     except getopt.GetoptError as err:
         print(str(err))
         usage()
@@ -286,6 +297,9 @@ def main():
     relabelling = '1'
     classnamedelimiter = ':'
     mergedelimiter = ';'
+    extractlabels = []
+    skipquotations = False
+    skipheader = False
 
     rl = dict(az=[],AZ=[],merge=[],noclass=[],digit=[],last=[],first=[])
 
@@ -309,6 +323,8 @@ def main():
             digitordering = False
         elif o == "-i":
             ignorelabels = a.split(",")
+        elif o == "-e":
+            extractlabels = a.split(",")
         elif o == "-1":
             rl['digit'] = a.split(",")
         elif o == "-a":
@@ -331,16 +347,20 @@ def main():
             classnamedelimiter = a          
         elif o == "-c":
             checkmerging = True          
+        elif o == "-H":
+            skipheader = True                 
+        elif o == "-q":
+            skipquotations = True                 
         elif o == "-M":
             mergedelimiter = a
         else:
             assert False, "unhandled option %s %s " % (o, a)
 
-    dc = DataCollector(defaults, ignorelabels, separator, labseparator, rl, classnamedelimiter,mergedelimiter, checkmerging)
+    dc = DataCollector(defaults, ignorelabels, separator, labseparator, rl, classnamedelimiter, mergedelimiter, checkmerging, extractlabels)
 
     dc.readfiles(args)
 
-    dc.csv(digitordering)
+    dc.csv(digitordering,skipheader,skipquotations)
 
 
 if __name__ == "__main__":
