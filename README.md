@@ -305,9 +305,9 @@ Prepare some data
 ```
 > partest.sh -g 3 -A: > c1.csv && cat c1.csv
 Id,Source,command,-a:,-b:,-c,-d,-A:
-0,-,partest.sh,"abc def",,1,,12
-1,-,partest.sh,"abc def",,1,,3
-2,-,partest.sh,"abc def",,1,,
+0,-,partest.sh,"abc def",,1,,0
+1,-,partest.sh,"abc def",,1,,6
+2,-,partest.sh,"abc def",,1,,5
 ```
 
 ```
@@ -317,9 +317,22 @@ Id,Source,command,-a:,-b:,-c,-d,-Y
 1,-,partest.sh,"abc def",,1,,
 ```
 
+Commands to be executed:
+```
+> csvmanip.py -X o -I c1.csv c2.csv
+id=0.c1 && partest.sh -o $DATFILE -a "abc def" -A 0 -c 
+id=1.c1 && partest.sh -o $DATFILE -a "abc def" -A 6 -c 
+id=2.c1 && partest.sh -o $DATFILE -a "abc def" -A 5 -c 
+id=0.c2 && partest.sh -o $DATFILE -a "abc def" -c 
+id=1.c2 && partest.sh -o $DATFILE -a "abc def" -c 
+```
+
+Here -o $DATFILE (see -X o in csvmanip.py) is the option of partest.sh to generate datfile. The value of DATFILE will be set by csvparallel (see below) to generate $id.dat file. 
+
 Run commands. Result in work dir (set workdir with -D) and with summary 
 ```
 > csvparallel.sh c1.csv c2.csv 
+
 Computers / CPU cores / Max jobs to run
 1:local / 16 / 5
 
@@ -327,14 +340,15 @@ Results merged in work/all.csv
 ```
 
 ```
-> ls work
+> ls work/*
+work/all.csv
+
+work/dat:
 0.c1.dat
 0.c2.dat
 1.c1.dat
 1.c2.dat
 2.c1.dat
-3.c1.dat
-all.csv
 ```
 
 ```

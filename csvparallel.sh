@@ -14,7 +14,7 @@ Usage: $0 [-o OPTDATFILE ] [-j JOBS] [-h] [-f] jobspec.csv
 	csv - list of commands with parameters; required fields are "command" and "datfile"
 	-f - force (overwrite exisiting dat files)
     -D - working dir (def. work)
-    -o OPTDATFILE - output option to generate datfile (def. $OPTDATFILE)
+    -X OPTDATFILE - output option to generate datfile (def. $OPTDATFILE)
     -h - help
 EOF
 
@@ -26,7 +26,7 @@ then
     exit 20
 fi
 
-set -- $( getopt j:hfD: $* )
+set -- $( getopt j:hfD:X: $* )
 
 while [ "$1" != -- ]
 do
@@ -35,6 +35,7 @@ do
         -f)   export FORCE=1;;
         -D)   export WORKDIR=$2; shift;;
 	    -j)   JOBS=$2; shift;;        
+        -X)   export OPTDATFILE=$2; shift;;        
     esac
     shift   
 done
@@ -44,9 +45,9 @@ shift
 runsingle()
 {    
 
-    if ! cd $WORKDIR 
+    if ! cd $WORKDIR/dat 2>/dev/null >/dev/null
     then 
-        >&2 echo Cannot enter dir $WORKDIR 
+        >&2 echo Cannot enter dir $WORKDIR/dat
         exit -1
     fi
 
@@ -85,12 +86,12 @@ export -f runsingle
 export JOBS
 export PATH=$PATH:$PWD
 export WORKDIR
-mkdir -p $WORKDIR
+mkdir -p $WORKDIR/dat
 
 csvmanip.py -X $OPTDATFILE -I $* | parallel --progress --no-run-if-empty -j $JOBS runsingle
 
 # csvmanip.py -H -e Id -i Source -I $*
 
-csvmanip.py -I $* | csvmanip.py -- $WORKDIR/*.dat > $WORKDIR/all.csv
+csvmanip.py -I $* | csvmanip.py -- $WORKDIR/dat/*.dat > $WORKDIR/all.csv
 
 echo Results merged in $WORKDIR/all.csv
