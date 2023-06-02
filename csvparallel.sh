@@ -45,12 +45,6 @@ shift
 runsingle()
 {    
 
-    if ! cd $WORKDIR/dat 2>/dev/null >/dev/null
-    then 
-        >&2 echo Cannot enter dir $WORKDIR/dat
-        exit -1
-    fi
-
     dgs="([a-zA-Z0-9.$]+)"
     [[ $* =~ id=$dgs ]] && id=${BASH_REMATCH[1]}
     if ! [[ $id ]]
@@ -62,6 +56,7 @@ runsingle()
     [[ $* =~ datfile=$dgs ]] && datfile=${BASH_REMATCH[1]}
     [[ $datfile ]] || datfile=$id.dat    
 
+    datfile=$WORKDIR/dat/$datfile
     DATFILE=$datfile.tmp    
 
     if [[ $FORCE ]] || ! [[ -f $datfile ]]
