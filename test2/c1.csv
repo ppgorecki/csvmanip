@@ -1,0 +1,4 @@
+Id,Source,command,datfile,-a:,-B
+0,-,partest.sh,1.dat,"abc def",1
+1,-,partest.sh,2.dat,"",1
+2,-,partest.sh,3.dat,,
