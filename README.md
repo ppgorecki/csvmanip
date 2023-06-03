@@ -195,10 +195,10 @@ Id,Source,a,Edge,A2:Edge,Edge1,Edge2,Tree,Tree1
 3,test/3.dat,True,10,,11,12,"(a,b)","(c,d)"
 ```
 
-### Reading from stdin (-) dat format or (--) csv format.
+### Reading from stdin (=) dat format or (-) csv format.
 
 ```
-> cat test/1.dat test/2.dat | csvmanip.py - 
+> cat test/1.dat test/2.dat | csvmanip.py = 
 Id,Source,Edge,A2:Edge,Edge1,A2:Edge1,Edge2,A2:Edge2,Edge3,Edge4,Tree,A1:Err
 -,-,10,100,14,103,10,105,16,12,"(a,b,c)",False
 ```
@@ -213,9 +213,9 @@ Id,Source,Edge,A
 4:2,test2/4.dat,14,123
 ```
 
-### Reading from stdin (-): dat file only
+### Reading dat from stdin (=)
 ```
-> cat test2/4.dat | csvmanip.py  -N Edge -
+> cat test2/4.dat | csvmanip.py  -N Edge =
 Id,Source,Edge,A
 0,-,10,40
 1,-,12,1

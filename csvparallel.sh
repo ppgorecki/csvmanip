@@ -1,5 +1,4 @@
 #!/bin/bash
-#
 
 OPTDATFILE=o
 JOBS=10
@@ -56,6 +55,7 @@ runsingle()
     [[ $* =~ datfile=$dgs ]] && datfile=${BASH_REMATCH[1]}
     [[ $datfile ]] || datfile=$id.dat    
 
+    LOGFILE=$WORKDIR/log/$(basename $datfile .dat).log
     datfile=$WORKDIR/dat/$datfile
     DATFILE=$datfile.tmp    
 
@@ -63,7 +63,7 @@ runsingle()
     then
         # gen datfile by a command
 
-        eval $*        
+        eval $* > $LOGFILE         
 
         if ! [[ -f $DATFILE ]]
         then
@@ -82,11 +82,17 @@ export JOBS
 export PATH=$PATH:$PWD
 export WORKDIR
 mkdir -p $WORKDIR/dat
+mkdir -p $WORKDIR/log
 
 csvmanip.py -X $OPTDATFILE -I $* | parallel --progress --no-run-if-empty -j $JOBS runsingle
 
-# csvmanip.py -H -e Id -i Source -I $*
+LST=$( csvmanip.py -H -e Id -i Source -I $* | sed s/$/.dat/g )
+CURDIR=$PWD
 
-csvmanip.py -I $* | csvmanip.py -- $WORKDIR/dat/*.dat > $WORKDIR/all.csv
+cd $WORKDIR/dat  > /dev/null
+csvmanip.py $LST > $CURDIR/$WORKDIR/res.csv 
+cd - > /dev/null
 
-echo Results merged in $WORKDIR/all.csv
+csvmanip.py -V -I $* | csvmanip.py -V - $WORKDIR/res.csv > $WORKDIR/all.csv
+
+echo Results merged in $WORKDIR/all.csv and $WORKDIR/res.csv

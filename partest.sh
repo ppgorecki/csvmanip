@@ -26,8 +26,7 @@ EOF
 			echo "$i=$(( $RANDOM % 20 ))"
 		fi
 	done
-	
-	done  | csvmanip.py -L -N command -
+	done  | csvmanip.py -L -N command =
 	exit 0
 fi
 
