@@ -43,6 +43,8 @@ In case of multiple occurences of LABEL assignments in a single file:
  -A LABELLIST - as above but use letters A-Z as suffixes
  -n LABELLIST - ignore classes for the given labels (labels moved to global class)
 
+-V - ignore classes from csv
+
 LABELLIST := LABEL[,LABEL]* or 'ALL' (meaning all labels)
 
 Delimiters and separators:
@@ -230,7 +232,7 @@ class DataCollector:
     def add2collector(self, dataid, s, sourceid=''):
 
         if self.attachsourceid: 
-            dataid = dataid+"."+sourceid
+            dataid = dataid+"."+str(sourceid)
 
         if dataid not in self.srcdats:
             self.srcdats.append(dataid)
@@ -245,7 +247,7 @@ class DataCollector:
             if not self.newdatfield:
                 yield p, getid(path)
             else:                        
-                if str(path)=='-': pref=''
+                if not str(path): pref=''
                 else: pref=getid(path)+":"                    
                 sl = []
                 cnt = 0
@@ -289,7 +291,7 @@ class DataCollector:
 
     def readcsvfile(self, f, path):
         
-        if self.skipcsvclass:
+        if self.skipcsvclass or not str(path.stem):
             pref = ''
         else:
             pref = str(path.stem)+":\n"
@@ -336,7 +338,7 @@ class DataCollector:
         pass
 
     def _read(self, pth): 
-        #print(pth)       
+        
         if pth.is_file():                
             if pth.suffix in ('.dat','.csv'):
                 yield pth
@@ -344,14 +346,16 @@ class DataCollector:
             for path in os.scandir(pth):
                 for p in self._read(Path(path)):
                     yield p                
-        elif str(pth) == '-':            
-            yield pth
+        elif str(pth) in "-=":            
+            yield pth        
         else:
             print(f"{pth} should be a .dat, .csv or - (stdin).",file=sys.stderr)
 
 
     def readfiles(self, fnames): 
-        flist = [ p for f in fnames for p in self._read(Path(f)) ]
+        
+        flist = [ p for f in fnames for p in self._read(Path(f)) ]        
+        
         for p in flist:
                     
             if p.suffix == '.dat':                
@@ -360,15 +364,14 @@ class DataCollector:
             elif p.suffix == '.csv':                
                 with open(p) as f:                
                     self.readcsvfile(f, p)
-            elif str(p) == "-":                
-                self.readdatfile(sys.stdin, p)  
-            elif str(p) == "--":                
-                self.readcsvfile(sys.stdin, p)
+            elif str(p) == "=":                
+                self.readdatfile(sys.stdin, "")  
+            elif str(p) == "-":                                
+                self.readcsvfile(sys.stdin, "")
 
         for p in self.srcdats:            
             self.rows.append(self.parsedat(self.collector[p].split("\n"), p, 
                 self.sourceids[p]))
-
 
     def mergeeqcolumns(self, labsmerge: int ):
 
