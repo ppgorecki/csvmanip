@@ -63,11 +63,8 @@ idlabel = "Id"
 sourcelabel = "Source"
 
 def getid(s):
-    return Path(s).stem
-    # fdigits = re.search(r'\d+', s)
-    # if fdigits:
-    #     return fdigits.group(0)
-    #return ''
+    if not s: return ""
+    return Path(s).stem    
 
 class DataCollector:
     def __init__(self, defaults: [str], ignorelabels: [str] , separator: str, labseparator: str,  relabellingrules, classnamedelimiter: str, mergedelimiter: str, checkmerging: bool, extractlabels: [str], newdatfield: str, skipcsvclass: bool, 
@@ -230,24 +227,26 @@ class DataCollector:
         return res
 
     def add2collector(self, dataid, s, sourceid=''):
+        
+        sourceid = str(sourceid)
 
-        if self.attachsourceid: 
-            dataid = dataid+"."+str(sourceid)
+        if self.attachsourceid and sourceid: 
+            dataid = dataid+"."+sourceid
 
         if dataid not in self.srcdats:
             self.srcdats.append(dataid)
             self.collector[dataid] = ''            
-            self.sourceids[dataid] = str(sourceid)        
+            self.sourceids[dataid] = sourceid     
 
         self.collector[dataid] += s + "\n:\n" # end class with :
 
-    def readdatfile(self, f, path):
+    def readdatfile(self, f, path, skipidfileprefix):
 
         def splitrows(p):
             if not self.newdatfield:
                 yield p, getid(path)
             else:                        
-                if not str(path): pref=''
+                if not path or skipidfileprefix: pref=''
                 else: pref=getid(path)+":"                    
                 sl = []
                 cnt = 0
@@ -289,12 +288,13 @@ class DataCollector:
 
         
 
-    def readcsvfile(self, f, path):
-        
-        if self.skipcsvclass or not str(path.stem):
+    def readcsvfile(self, f, path, skipidfileprefix):
+        # skipidfileprefix - ignored now
+
+        if self.skipcsvclass or not path:
             pref = ''
         else:
-            pref = str(path.stem)+":\n"
+            pref = str(Path(path).stem)+":\n"
 
         if verbose>0:
             print(path)
@@ -353,25 +353,50 @@ class DataCollector:
 
 
     def readfiles(self, fnames): 
-        
-        flist = [ p for f in fnames for p in self._read(Path(f)) ]        
-        
-        for p in flist:
-                    
-            if p.suffix == '.dat':                
-                with open(p) as f:
-                    self.readdatfile(f, p)                        
-            elif p.suffix == '.csv':                
-                with open(p) as f:                
-                    self.readcsvfile(f, p)
-            elif str(p) == "=":                
-                self.readdatfile(sys.stdin, "")  
-            elif str(p) == "-":                                
-                self.readcsvfile(sys.stdin, "")
+                
+        filesources = []
+        for f in fnames:
+            for p in self._read(Path(f)):                    
+                if p.suffix == '.dat':                
+                    filesources.append((1, p))
+                    #with open(p) as f:
+                    #    self.readdatfile(f, p)                        
+                elif p.suffix == '.csv':                
+                    filesources.append((0, p))
+                    #with open(p) as f:                
+                    #    self.readcsvfile(f, p)
+                elif str(p) == "=":       
+                    filesources.append((1, None))         
+                    #self.readdatfile(sys.stdin, Path('cin'))  
+                elif str(p) == "-":                            
+                    filesources.append((0, None))             
+                    #self.readcsvfile(sys.stdin, Path('cin'))
+
+        skipidfileprefix = len(filesources)==1                   
+
+        for isdat, p in filesources:
+            if p is None: 
+                f = sys.stdin
+                p = "stdin"
+            else:
+                f = open(p)
+                p = str(p)
+            
+            if isdat: 
+                self.readdatfile(f, p, skipidfileprefix)                        
+            else: 
+                self.readcsvfile(f, p, skipidfileprefix)    
+
+
 
         for p in self.srcdats:            
-            self.rows.append(self.parsedat(self.collector[p].split("\n"), p, 
-                self.sourceids[p]))
+            self.rows.append(
+                self.parsedat(
+                    self.collector[p].split("\n"), 
+                    p, 
+                    self.sourceids[p]
+                    )
+                )
 
     def mergeeqcolumns(self, labsmerge: int ):
 

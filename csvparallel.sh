@@ -1,5 +1,4 @@
 #!/bin/bash
-#
 
 OPTDATFILE=o
 JOBS=10
